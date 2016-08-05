@@ -25,10 +25,10 @@
     if ($.popline.utils.isNull($.popline.current)) {
       return;
     }
-    var isTargetOrChild = $.contains($.popline.current.target.get(0), event.target) || $.popline.current.target.get(0) === event.target;
-    var isBarOrChild = $.contains($.popline.current.bar.get(0), event.target) || $.popline.current.bar.get(0) === event.target;
+    // var isTargetOrChild = $.contains($.popline.current.target.get(0), event.target) || $.popline.current.target.get(0) === event.target;
+    // var isBarOrChild = $.contains($.popline.current.bar.get(0), event.target) || $.popline.current.bar.get(0) === event.target;
     // TODO disable check multiple popline check
-    if ((isTargetOrChild || isBarOrChild) && $.popline.utils.selection().text().length > 0 && !$.popline.current.keepSilentWhenBlankSelected()) {
+    if ($.popline.utils.selection().textWithinTarget().length > 0 && !$.popline.current.keepSilentWhenBlankSelected()) {
       var target= $.popline.current.target, bar = $.popline.current.bar;
       if (bar.is(":hidden") || bar.is(":animated")) {
         bar.stop(true, true);
@@ -515,6 +515,22 @@
             text: function() {
                return document.selection.createRange().text;
             },
+            textWithinTarget: function() {
+              var selTextRange = document.selection.createRange();
+              var textRange = selTextRange.duplicate();
+              var selectedText = "";
+              textRange.moveToElementText($.popline.current.target.get(0));
+              if (selTextRange.compareEndPoints("EndToStart", textRange) == 1 && selTextRange.compareEndPoints("StartToEnd", textRange) == -1) {
+                  if (selTextRange.compareEndPoints("StartToStart", textRange) == 1) {
+                      textRange.setEndPoint("StartToStart", selTextRange);
+                  }
+                  if (selTextRange.compareEndPoints("EndToEnd", textRange) == -1) {
+                      textRange.setEndPoint("EndToEnd", selTextRange);
+                  }
+                  selectedText = textRange.text;
+              }
+              return selectedText;
+            },
             focusNode: function() {
               return document.selection.createRange().parentElement();
             },
@@ -535,6 +551,27 @@
             },
             text: function() {
                return window.getSelection().toString();
+            },
+            textWithinTarget: function() {
+              var sel = window.getSelection(), rangeCount;
+              var selectedText = "";
+              if ( (rangeCount = sel.rangeCount) > 0 ) {
+                  var range = document.createRange();
+                  for (var i = 0, selRange; i < rangeCount; ++i) {
+                      range.selectNodeContents($.popline.current.target.get(0));
+                      selRange = sel.getRangeAt(i);
+                      if (selRange.compareBoundaryPoints(range.START_TO_END, range) == 1 && selRange.compareBoundaryPoints(range.END_TO_START, range) == -1) {
+                          if (selRange.compareBoundaryPoints(range.START_TO_START, range) == 1) {
+                              range.setStart(selRange.startContainer, selRange.startOffset);
+                          }
+                          if (selRange.compareBoundaryPoints(range.END_TO_END, range) == -1) {
+                              range.setEnd(selRange.endContainer, selRange.endOffset);
+                          }
+                          selectedText += range.toString();
+                      }
+                  }
+              }
+              return selectedText;
             },
             focusNode: function() {
               return window.getSelection().focusNode;
