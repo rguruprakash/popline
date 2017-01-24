@@ -555,6 +555,7 @@
             textWithinTarget: function() {
               var sel = window.getSelection(), rangeCount;
               var selectedText = "";
+              try { // Hack to stop exception. 'Has to be fixed'
               if ( (rangeCount = sel.rangeCount) > 0 ) {
                   var range = document.createRange();
                   for (var i = 0, selRange; i < rangeCount; ++i) {
@@ -570,6 +571,8 @@
                           selectedText += range.toString();
                       }
                   }
+              }
+              } catch (e) {
               }
               return selectedText;
             },
